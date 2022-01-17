@@ -7,7 +7,8 @@ export const loginValidator = async (req: Request, res: Response, next: NextFunc
     const schema = await loginValidationSchema.validate(req.body);
     const userService = new UserService();
     const {email, password} = req.body;
-    const user = await userService.find(email);
+    const user = await userService.findByEmail(email);
+
     if (!user) {
         return res.json({
             status: 400,
@@ -27,6 +28,8 @@ export const loginValidator = async (req: Request, res: Response, next: NextFunc
     res.locals.user = user;
 
     schema.error ?
-        res.json({status: 400, message: schema.error.details[0].message}) : next();
+        res.json({
+            status: 400,
+            message: schema.error.details[0].message}) : next();
 
 };
