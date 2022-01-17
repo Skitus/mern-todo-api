@@ -1,0 +1,5 @@
+{
+  "mongoURI": "mongodb+srv://arthur:1q2w3e4r@cluster0.gxvnh.mongodb.net/myFirstDatabase?retryWrites=true&w=majority",
+  "jwtSecret": "Skitus",
+  "jwtExpiration": 360000
+}
