@@ -7,13 +7,13 @@ export const editPasswordUserValidator = async (req: Request, res: Response, nex
     const {email} = req.body;
 
     const userService = new UserService();
-    const result = await userService.find(email);
+    const result = await userService.findByEmail(email);
     if (!result) {
-        return res.status(400).send({message: `user email was not found`});
+        return res.send({ status: 400, message: `user email was not found`});
     }
 
     res.locals.id = result?._id;
 
     schema.error ?
-        res.status(400).json({ message: schema.error.details[0].message}) : next();
+        res.json({ status: 400, message: schema.error.details[0].message}) : next();
 };

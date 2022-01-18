@@ -2,29 +2,34 @@ import { NextFunction, Request, Response } from "express";
 import { registerValidationSchema } from "../validation/validation";
 import UserService from "../services/user.service";
 
-export const registerValidator = async (req: Request, res: Response, next: NextFunction) => {
-    const schema = await registerValidationSchema.validate(req.body);
-
+export const isEmailTakenValidator = async (req: Request, res: Response, next: NextFunction) => {
+    const {email} = req.body;
     const userService = new UserService();
-    const {email, username} = req.body;
 
-    const isEmailTaken = await userService.findByEmail(email);
-
-    if (isEmailTaken) {
-        return res.json({
+    const isEmailTaken = await userService.isEmailExist(email);
+    isEmailTaken ?
+        res.json({
             status: 400,
             message: "This email is already taken"
-        });
-    }
+        }) : next();
 
-    const isUsernameTaken = await userService.findByUsername(username);
-    if (isUsernameTaken) {
-        return res.json({
+};
+
+export const isUsernameTakenValidator = async (req: Request, res: Response, next: NextFunction) => {
+
+    const {username} = req.body;
+    const userService = new UserService();
+
+    const isUsernameTaken = await userService.isUsernameExist(username);
+    isUsernameTaken ?
+        res.json({
             status: 400,
             message: "This username is already taken"
-        });
-    }
+        }) : next();
+};
 
+export const registerValidator = async (req: Request, res: Response, next: NextFunction) => {
+    const schema = await registerValidationSchema.validate(req.body);
     schema.error ?
         res.json({
             status: 400,

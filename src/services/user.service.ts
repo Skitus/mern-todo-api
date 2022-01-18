@@ -7,19 +7,19 @@ export default class UserService {
     }
 
     async findByEmail(data: string) {
-        // tslint:disable-next-line:no-console
-        console.log("email in service", data);
         return await User.findOne({email: data});
     }
 
-    async findByUsername(data: string) {
-        // tslint:disable-next-line:no-console
-        console.log("username in service", data);
-        return await User.findOne({username: data});
+    async isUsernameExist(data: string) {
+        return await User.exists({username: data});
+    }
+
+    async isEmailExist(data: string) {
+        return await User.exists({username: data});
     }
 
     async update(_id: string, password: string) {
-        await User.findByIdAndUpdate(_id, {password});
+        return await User.findByIdAndUpdate(_id, {password});
     }
 
     async isIdExist(_id: string) {

@@ -10,10 +10,11 @@ export class UserController {
 
     async createUser(req: Request, res: Response) {
         const {username, email, password} = req.body;
+
         const hashedPassword = await bcrypt.hash(password, 8);
 
         const user = await this.userService.create({email, username, password: hashedPassword});
-        res.json({user});
+        res.json({status: 200, message: "User was register", user});
     }
 
     async loginUser(req: Request, res: Response) {
@@ -33,6 +34,8 @@ export class UserController {
         const {newPassword} = req.body;
         const hashedPassword = await bcrypt.hash(newPassword, 8);
         await this.userService.update(res.locals.id.toString(), hashedPassword);
+
+        res.json({status: 200, message: "Create new password"});
     }
 }
 
