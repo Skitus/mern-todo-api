@@ -15,7 +15,7 @@ export default class UserService {
     }
 
     async isEmailExist(data: string) {
-        return await User.exists({username: data});
+        return await User.exists({email: data});
     }
 
     async update(_id: string, password: string) {

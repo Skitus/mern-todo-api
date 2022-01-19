@@ -3,6 +3,7 @@ import UserService from "../services/user.service";
 import jsonwebtoken from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import config from "config";
+import nodemailer from "nodemailer";
 
 export class UserController {
     constructor(private userService: UserService) {
@@ -32,6 +33,16 @@ export class UserController {
 
     async editPasswordUser(req: Request, res: Response) {
         const {newPassword} = req.body;
+
+   /*     const mail = nodemailer.createTransport({
+            host: "smtp.gmail.com",
+            port: 587,
+            secure: false,
+                auth: {
+
+                }
+        });*/
+
         const hashedPassword = await bcrypt.hash(newPassword, 8);
         await this.userService.update(res.locals.id.toString(), hashedPassword);
 
