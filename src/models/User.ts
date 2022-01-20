@@ -4,6 +4,7 @@ export interface IUser extends Document {
   email: string;
   password: string;
   username: string;
+  verified: boolean;
 }
 
 const userSchema: Schema = new Schema({
@@ -24,7 +25,8 @@ const userSchema: Schema = new Schema({
     type: String,
     required: true,
     unique: true
-  }
+  },
+  verified: { type: Boolean, default: false },
 });
 
 const User: Model<IUser> = model("User", userSchema);

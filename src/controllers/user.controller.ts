@@ -3,7 +3,10 @@ import UserService from "../services/user.service";
 import jsonwebtoken from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import config from "config";
-import nodemailer from "nodemailer";
+import crypto from "crypto";
+import Token from "../models/Token";
+import { sendEmail } from "../types/sendEmail";
+import User from "../models/User";
 
 export class UserController {
     constructor(private userService: UserService) {
@@ -31,24 +34,34 @@ export class UserController {
     }
 
 
-    async editPasswordUser(req: Request, res: Response) {
-        const {newPassword} = req.body;
+  /*  async editPasswordUser(req: Request, res: Response) {
+        const user = await User.findOne({ _id: req.params.id });
+        if (!user) return res.status(400).send({ message: "Invalid link" });
+        // tslint:disable-next-line:no-console
+        console.log("editPasswordUser", req.body);
+        let token = await Token.findOne({ userId: user._id});
+        if (!token) {
+            token = await new Token({
+                userId: user._id,
+                token: crypto.randomBytes(32).toString("hex"),
+            }).save();
+        }
 
-   /*     const mail = nodemailer.createTransport({
-            host: "smtp.gmail.com",
-            port: 587,
-            secure: false,
-                auth: {
+        const url = `http://localhost:3000/password-reset/${user._id}/${token.token}/`;
+        await sendEmail(req.body.email, "Password Reset", url);
 
-                }
-        });*/
+        res.status(200).send({ message: "Password reset link sent to your email account" });
+/!*        const {newPassword} = req.body;
 
         const hashedPassword = await bcrypt.hash(newPassword, 8);
         await this.userService.update(res.locals.id.toString(), hashedPassword);
 
-        res.json({status: 200, message: "Create new password"});
-    }
+        res.json({status: 200, message: "Create new password"});*!/
+    }*/
 }
+
+
+
 
 
 const userController = new UserController(new UserService());
