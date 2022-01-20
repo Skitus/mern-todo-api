@@ -4,6 +4,12 @@ import UserService from "../services/user.service";
 
 export const editPasswordUserValidator = async (req: Request, res: Response, next: NextFunction) => {
     const schema = await editPasswordValidationSchema.validate(req.body);
+
+    schema.error ?
+        res.json({ status: 400, message: schema.error.details[0].message}) : next();
+};
+
+export const isEmailExist = async (req: Request, res: Response, next: NextFunction) => {
     const {email} = req.body;
 
     const userService = new UserService();
@@ -12,8 +18,6 @@ export const editPasswordUserValidator = async (req: Request, res: Response, nex
         return res.send({ status: 400, message: `user email was not found`});
     }
 
-    res.locals.id = result?._id;
-
-    schema.error ?
-        res.json({ status: 400, message: schema.error.details[0].message}) : next();
+    res.locals.user = result;
+    next();
 };

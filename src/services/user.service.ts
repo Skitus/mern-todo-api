@@ -10,6 +10,10 @@ export default class UserService {
         return await User.findOne({email: data});
     }
 
+    async findById(data: string) {
+        return await User.findOne({_id: data});
+    }
+
     async isUsernameExist(data: string) {
         return await User.exists({username: data});
     }

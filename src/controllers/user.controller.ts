@@ -5,8 +5,10 @@ import bcrypt from "bcrypt";
 import config from "config";
 import crypto from "crypto";
 import Token from "../models/Token";
+import TokenService from "../services/token.service";
 import { sendEmail } from "../types/sendEmail";
 import User from "../models/User";
+
 
 export class UserController {
     constructor(private userService: UserService) {
@@ -33,36 +35,64 @@ export class UserController {
         res.json({status: 200, token, user: user._id.toString(), message: "User was logged", username: user.username});
     }
 
-
-  /*  async editPasswordUser(req: Request, res: Response) {
-        const user = await User.findOne({ _id: req.params.id });
-        if (!user) return res.status(400).send({ message: "Invalid link" });
-        // tslint:disable-next-line:no-console
-        console.log("editPasswordUser", req.body);
-        let token = await Token.findOne({ userId: user._id});
+    async sendPasswordLink(req: Request, res: Response) {
+    const tokenService = new TokenService();
+        let token = await tokenService.findToken(res.locals.user._id);
         if (!token) {
             token = await new Token({
-                userId: user._id,
+                userId: res.locals.user._id,
                 token: crypto.randomBytes(32).toString("hex"),
             }).save();
         }
+        const url = `http://localhost:3000/password-reset/${res.locals.user._id}/${token.token}/`;
+        await sendEmail(res.locals.user.email, "Password Reset", url);
 
-        const url = `http://localhost:3000/password-reset/${user._id}/${token.token}/`;
-        await sendEmail(req.body.email, "Password Reset", url);
+        res.send({status: 200, message: "Password reset link sent to your email account" });
+    }
 
-        res.status(200).send({ message: "Password reset link sent to your email account" });
-/!*        const {newPassword} = req.body;
+    async verifyPasswordLink(req: Request, res: Response) {
+        // tslint:disable-next-line:no-console
+        console.log("req.params.id", req.params.id);
+            const user = await User.findOne({_id: req.params.id});
+        // tslint:disable-next-line:no-console
+            console.log("user", user);
+            if (!user) return res.send({status: 400, message: "Invalid link" });
 
-        const hashedPassword = await bcrypt.hash(newPassword, 8);
-        await this.userService.update(res.locals.id.toString(), hashedPassword);
+            const token = await Token.findOne({
+                userId: user._id,
+                token: req.params.token,
+            });
+        // tslint:disable-next-line:no-console
+        console.log("token", token);
+            if (!token) return res.send({status: 400, message: "Invalid link" });
 
-        res.json({status: 200, message: "Create new password"});*!/
-    }*/
+            res.send({status: 200, message: "Valid Url"});
+    }
+
+    async setNewPassword(req: Request, res: Response) {
+        const user = await this.userService.findById(req.params.id);
+
+        if (!user) return res.send({ status: 400, message: "Invalid link" });
+
+        const token = await Token.findOne({
+            userId:  user._id,
+            token: req.params.token,
+        });
+
+        if (!token) return res.send({status: 400, message: "Invalid link" });
+
+        if (!user.verified) user.verified = true;
+
+        const salt = await bcrypt.genSalt(8);
+        const hashPassword = await bcrypt.hash(req.body.password, salt);
+
+        user.password = hashPassword;
+        await user.save();
+        await token.remove();
+
+        res.send({status: 200, message: "Password reset successfully" });
+    }
 }
-
-
-
-
 
 const userController = new UserController(new UserService());
 export default userController;
