@@ -7,7 +7,7 @@ import crypto from "crypto";
 import Token from "../models/Token";
 import TokenService from "../services/token.service";
 import { sendEmail } from "../types/sendEmail";
-import User from "../models/User";
+import { Types } from "mongoose";
 
 
 export class UserController {
@@ -37,56 +37,52 @@ export class UserController {
 
     async sendPasswordLink(req: Request, res: Response) {
     const tokenService = new TokenService();
-        let token = await tokenService.findToken(res.locals.user._id);
+        let token = await tokenService.findTokenById(res.locals.user._id);
         if (!token) {
             token = await new Token({
                 userId: res.locals.user._id,
                 token: crypto.randomBytes(32).toString("hex"),
             }).save();
         }
-        const url = `http://localhost:3000/password-reset/${res.locals.user._id}/${token.token}/`;
+        const url = `${process.env.BASE_URL_CLIENT}/password-reset/${res.locals.user._id}/${token.token}/`;
         await sendEmail(res.locals.user.email, "Password Reset", url);
 
         res.send({status: 200, message: "Password reset link sent to your email account" });
     }
 
     async verifyPasswordLink(req: Request, res: Response) {
-        // tslint:disable-next-line:no-console
-        console.log("req.params.id", req.params.id);
-            const user = await User.findOne({_id: req.params.id});
-        // tslint:disable-next-line:no-console
-            console.log("user", user);
-            if (!user) return res.send({status: 400, message: "Invalid link" });
+        const tokenService = new TokenService();
+        if (!Types.ObjectId.isValid(req.params.id)) {
+            return res.send({status: 400, message: "Invalid link" });
+        }
 
-            const token = await Token.findOne({
-                userId: user._id,
-                token: req.params.token,
-            });
-        // tslint:disable-next-line:no-console
-        console.log("token", token);
-            if (!token) return res.send({status: 400, message: "Invalid link" });
+        const user = await this.userService.findById(new Types.ObjectId(req.params.id));
+        if (!user) return res.send({status: 400, message: "Invalid link" });
 
-            res.send({status: 200, message: "Valid Url"});
+        const token = await tokenService.findToken(user._id, req.params.token);
+        if (!token) return res.send({status: 400, message: "Invalid link" });
+
+        res.send({status: 200, message: "Valid Url"});
     }
 
     async setNewPassword(req: Request, res: Response) {
-        const user = await this.userService.findById(req.params.id);
+        const tokenService = new TokenService();
+        if (!Types.ObjectId.isValid(req.params.id)) {
+            return res.send({status: 400, message: "Invalid link" });
+        }
 
+        const user = await this.userService.findById(new Types.ObjectId(req.params.id));
         if (!user) return res.send({ status: 400, message: "Invalid link" });
 
-        const token = await Token.findOne({
-            userId:  user._id,
-            token: req.params.token,
-        });
-
+        const token = await tokenService.findToken(user._id, req.params.token);
         if (!token) return res.send({status: 400, message: "Invalid link" });
 
         if (!user.verified) user.verified = true;
-
         const salt = await bcrypt.genSalt(8);
-        const hashPassword = await bcrypt.hash(req.body.password, salt);
+        const hashPassword = await bcrypt.hash(req.body.newPassword, salt);
 
         user.password = hashPassword;
+
         await user.save();
         await token.remove();
 
